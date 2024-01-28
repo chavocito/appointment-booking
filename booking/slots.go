@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const DefaultBookingDuration = 1 * time.Hour
@@ -37,4 +39,36 @@ func GetBookableSlots(ctx context.Context, from string) (*SlotsResponse, error) 
 		return nil, errors.New("No time slots available")
 	}
 	return &slotsResponse, nil
+}
+
+func bookableSlotsForDay(date time.Time) ([]BookableSlot, error) {
+	availableStartTime := pgtype.Time{
+		Valid: true,
+		Microseconds: int64(9 * 3600) * 1e6,
+	}
+	
+	availableEndTime := pgtype.Time{
+		Valid: true,
+		Microseconds: int64(17 * 3600) * 1e6,
+	}
+
+	availStart := date.Add(time.Duration(availableStartTime.Microseconds) * time.Microsecond)
+	availEnd := date.Add(time.Duration(availableEndTime.Microseconds) * time.Microsecond)
+
+	// Compute the bookable slots in this day, based on availability.
+	var slots []BookableSlot
+	start := availStart
+	for {
+		end := start.Add(DefaultBookingDuration)
+		if end.After(availEnd) {
+			break
+		}
+		slots = append(slots, BookableSlot{
+			Start: start,
+			End:   end,
+		})
+		start = end
+	}
+
+	return slots, nil
 }
