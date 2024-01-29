@@ -2,7 +2,6 @@ package booking
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -26,30 +25,29 @@ func GetBookableSlots(ctx context.Context, from string) (*SlotsResponse, error) 
 	}
 
 	const numDays = 7
-	
+
 	var slots []BookableSlot
-
-	for i := 0; i <= numDays; i++ {
+	for i := 0; i < numDays; i++ {
 		date := fromDate.AddDate(0, 0, i)
-		daySlots, err :=
-		slotsResponse.Slots = append(times, fromDate)
+		daySlots, err := bookableSlotsForDay(date)
+		if err != nil {
+			return nil, err
+		}
+		slots = append(slots, daySlots...)
 	}
 
-	if len(i2) < 1 {
-		return nil, errors.New("No time slots available")
-	}
-	return &slotsResponse, nil
+	return &SlotsResponse{Slots: slots}, nil
 }
 
 func bookableSlotsForDay(date time.Time) ([]BookableSlot, error) {
 	availableStartTime := pgtype.Time{
-		Valid: true,
-		Microseconds: int64(9 * 3600) * 1e6,
+		Valid:        true,
+		Microseconds: int64(9*3600) * 1e6,
 	}
-	
+
 	availableEndTime := pgtype.Time{
-		Valid: true,
-		Microseconds: int64(17 * 3600) * 1e6,
+		Valid:        true,
+		Microseconds: int64(17*3600) * 1e6,
 	}
 
 	availStart := date.Add(time.Duration(availableStartTime.Microseconds) * time.Microsecond)
