@@ -40,6 +40,7 @@ func GetBookableSlots(ctx context.Context, from string) (*SlotsResponse, error) 
 }
 
 func bookableSlotsForDay(date time.Time) ([]BookableSlot, error) {
+	//hardcode current start to end time as 09:00 to 17:00
 	availableStartTime := pgtype.Time{
 		Valid:        true,
 		Microseconds: int64(9*3600) * 1e6,
